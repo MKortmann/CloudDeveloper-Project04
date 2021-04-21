@@ -13,9 +13,11 @@ provider:
   region: ${opt:region, 'eu-central-1'}
 
   environment:
+    # name of the todo table to be used in the resources&lambda for dynamoDB
     TODOS_TABLE: Todos-${self:provider.stage}
 
   iamRoleStatements:
+    # TODOS_TABLE permissions for lambda functions
     - Effect: Allow
       Action:
         - dynamodb:Scan
@@ -35,6 +37,7 @@ functions:
       - http:
           method: get
           path: todos
+          cors: true
 
   # # TODO: Configure this function
   # CreateTodo:
@@ -70,7 +73,7 @@ functions:
 
 resources:
   Resources:
-    # TODO: Add any necessary AWS resources
+    # DynamoDB Table
     TodosDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
