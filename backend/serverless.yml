@@ -40,12 +40,12 @@ functions:
           cors: true
 
   # # TODO: Configure this function
-  # CreateTodo:
-  #   handler: src/lambda/http/createTodo.handler
-  #   events:
-  #     - http:
-  #         method: post
-  #         path: todos
+  CreateTodo:
+    handler: src/lambda/http/createTodo.handler
+    events:
+      - http:
+          method: post
+          path: todos
 
   # # TODO: Configure this function
   # UpdateTodo:
