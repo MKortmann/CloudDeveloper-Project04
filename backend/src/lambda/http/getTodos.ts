@@ -1,13 +1,17 @@
-import 'source-map-support/register'
-
-import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+// import 'source-map-support';
+import * as AWS from 'aws-sdk';
 
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('getTodos');
 
+
+const docClient = new AWS.DynamoDB.DocumentClient()
+
+const todosTable = process.env.TODOS_TABLE
+
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  // TODO: Get all TODO items for a current user
   console.log('Processing event: ', event)
 
   logger.info('Processing getTodos Event: ', {
@@ -15,14 +19,20 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   })
 
 
-    // Return result
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({
-        work: "worked"
-      })
-    }
+  const result = await docClient.scan({
+    TableName: todosTable
+  }).promise()
+
+  const items = result.Items;
+
+  // Return result
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      items
+    })
+  }
 }
