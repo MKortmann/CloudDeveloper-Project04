@@ -1,5 +1,5 @@
 {
-  "name": "serverless-todo-app",
+  "name": "serverless-todo-app-linux",
   "version": "1.0.0",
   "description": "Serverless TODO image app",
   "dependencies": {
@@ -12,7 +12,7 @@
     "middy": "^0.27.0",
     "source-map-support": "^0.5.11",
     "uuid": "^3.3.2",
-    "winston": "^3.2.1"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",
