@@ -52,11 +52,13 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     Key: {
       id: todoId
     },
-    UpdateExpression: "set #name =:name",
+    UpdateExpression: "set #name =:name, #dueDate=:dueDate, #done=:done",
     ExpressionAttributeValues: {
       ":name": updatedTodo.name,
+      ":dueDate": updatedTodo.dueDate,
+      ":done": updatedTodo.done
     },
-    ExpressionAttributeNames: {"#name": "name"},
+    ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate", "#done": "done"},
     ReturnValues: "UPDATED_NEW"
   }).promise()
 
