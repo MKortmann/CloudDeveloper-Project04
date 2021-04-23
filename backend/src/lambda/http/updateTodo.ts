@@ -23,7 +23,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     updatedTodo
   })
 
-  let itemToBeUpdated = await docClient.query({
+  let todoToBeUpdate = await docClient.query({
     TableName: todosTable,
     KeyConditionExpression: 'id = :id',
     ExpressionAttributeValues: {
@@ -31,17 +31,34 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
   }).promise()
 
-  // itemToBeUpdated = {...updatedTodo};
 
-  // if(itemToBeUpdated.Count === 0) {
-  //   return {
-  //     statusCode: 404,
-  //     headers: {
-  //       'Access-Control-Allow-Origin': '*'
-  //     },
-  //     body: 'The item to be update was not found'
-  //   }
+  if(todoToBeUpdate.Items.length === 0) {
+    return {
+      statusCode: 404,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: 'The item to be update was not found'
+    }
+  }
+
+  // const newItem = {
+  //   id: todoId,
+  //   ...updatedTodo
   // }
+
+  const todoUpdated = await docClient.update({
+    TableName: todosTable,
+    Key: {
+      id: todoId
+    },
+    UpdateExpression: "set #name =:name",
+    ExpressionAttributeValues: {
+      ":name": updatedTodo.name,
+    },
+    ExpressionAttributeNames: {"#name": "name"},
+    ReturnValues: "UPDATED_NEW"
+  }).promise()
 
 
   return {
@@ -49,6 +66,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    body: JSON.stringify(itemToBeUpdated)
+    body: JSON.stringify(todoUpdated)
   }
 }
