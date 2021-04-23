@@ -9,21 +9,29 @@ provider:
   name: aws
   runtime: nodejs12.x
 
+  # it should use the option provide in the CLI if it is set, if not, use dev.
+  # so, if you deploy without use stage parameter, serverless will include dev
   stage: ${opt:stage, 'dev'}
+  # if region is provide then use it, if not use 'eu-central-1'
   region: ${opt:region, 'eu-central-1'}
 
+  # global environment variables
   environment:
+    # The DynamoDB table have unique names. They need to be unique per account per region
+    # Names are UTF-8 encoded, case-sensitive and should be between 3 and 255 charaters long
     TODOS_TABLE: ${self:service.name}-Todos-${self:provider.stage}
 
+  # all the permissions here are global that means for all lambda functions
   iamRoleStatements:
-    # TODOS_TABLE permissions for lambda functions
+    # TODOS_TABLE permissions for all lambda functions
     - Effect: Allow
       Action:
         - dynamodb:Scan
         - dynamodb:PutItem
         - dynamodb:GetItem
+        - dynamodb:DeleteItem
+        - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-
 
 functions:
 
@@ -37,6 +45,7 @@ functions:
       - http:
           method: get
           path: todos
+          # fix problem with preflight request
           cors: true
 
   # # TODO: Configure this function
@@ -48,20 +57,22 @@ functions:
           path: todos
 
   # # TODO: Configure this function
-  # UpdateTodo:
-  #   handler: src/lambda/http/updateTodo.handler
-  #   events:
-  #     - http:
-  #         method: patch
-  #         path: todos/{todoId}
+  UpdateTodo:
+    handler: src/lambda/http/updateTodo.handler
+    events:
+      - http:
+          method: patch
+          path: todos/{todoId}
+          cors: true
 
   # # TODO: Configure this function
-  # DeleteTodo:
-  #   handler: src/lambda/http/deleteTodo.handler
-  #   events:
-  #     - http:
-  #         method: delete
-  #         path: todos/{todoId}
+  DeleteTodo:
+    handler: src/lambda/http/deleteTodo.handler
+    events:
+      - http:
+          method: delete
+          path: todos/{todoId}
+          cors: true
 
   # # TODO: Configure this function
   # GenerateUploadUrl:
@@ -73,13 +84,16 @@ functions:
 
 resources:
   Resources:
-    # DynamoDB Table
+    # Add DynamoDB Table Definition
+    # DynamoDB is schemaless, we need to define only the primary key and global secondary keys.
     TodosDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        # single id field of type string which is the partition key
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
+        # so, we set the simple primary key as hash key
         KeySchema:
           - AttributeName: id
             KeyType: HASH
