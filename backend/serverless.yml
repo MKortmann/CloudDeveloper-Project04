@@ -60,6 +60,9 @@ functions:
           path: todos
           # fix problem with preflight request
           cors: true
+          # so we specified here that it should use the auth func. specified before
+          authorizer: Auth
+
 
   # # TODO: Configure this function
   CreateTodo:
@@ -151,3 +154,16 @@ resources:
               Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*'
       # specify which bucket this bucketPolicy should be applied
         Bucket: !Ref AttachmentsBucket
+
+    # we need to provide correct CORS headers if our customer authorizer
+    # denies access to any functions. It set correct CORS headers if our customer authorizer fails.
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
