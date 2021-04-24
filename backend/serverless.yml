@@ -25,7 +25,7 @@ provider:
     # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
     TODOS_SIGNED_URL_EXPIRATION: 600
     # we use this auth_secret generated from Auth to verify JWT Tokens
-    AUTH_0_SECRET: 2LULKhsESZTona0KrTvI-XcAlz5XMVQNqZYgHALFx8g5WzMJbdLrHZA0x-tyDVC4
+    AUTH_0_SECRET: 7IuIAQjcteEgS3RWy8b4jBtwI4ykAXh8OEZ39XZ82GzfqI1Hftm3_62696bkhoM1
 
 
   # all the permissions here are global that means for all lambda functions
