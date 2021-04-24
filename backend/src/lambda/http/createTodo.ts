@@ -30,11 +30,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     imageUrl: `https://${s3Bucket}.s3.amazonaws.com/${id}`
   }
 
-  // here is missing the pressigned Url
-  // WE need to call the generateUploadUrl, then it will return an URL
-  // THEN WE UPLOAD IT TO THE URL;
-  // AND THEN WE ADD the url IT TO THE NEWTODOITEM TO BE ABLE TO FETCH THE TODO WITH THE URL
-
   console.log("item created:", todoItem)
 
   // add this to dynamoDB
