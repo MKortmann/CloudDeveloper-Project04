@@ -42,11 +42,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     }
   }
 
-  // const newItem = {
-  //   id: todoId,
-  //   ...updatedTodo
-  // }
-
   const todoUpdated = await docClient.update({
     TableName: todosTable,
     Key: {
