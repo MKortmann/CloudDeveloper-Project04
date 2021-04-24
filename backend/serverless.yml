@@ -20,6 +20,11 @@ provider:
     # The DynamoDB table have unique names. They need to be unique per account per region
     # Names are UTF-8 encoded, case-sensitive and should be between 3 and 255 charaters long
     TODOS_TABLE: ${self:service.name}-Todos-${self:provider.stage}
+    # bucket name should not contain uppgercase characters
+    TODOS_IMAGES_S3_BUCKET: ${self:service.name}-images-${self:provider.stage}
+    # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
+    TODOS_SIGNED_URL_EXPIRATION: 600
+
 
   # all the permissions here are global that means for all lambda functions
   iamRoleStatements:
@@ -28,11 +33,17 @@ provider:
       Action:
         - dynamodb:Scan
         - dynamodb:PutItem
-        - dynamodb:GetItem
         - dynamodb:DeleteItem
         - dynamodb:UpdateItem
         - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+    # add permissions to be able to put and get objects for our s3 bucket
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
+
 
 functions:
 
@@ -56,6 +67,7 @@ functions:
       - http:
           method: post
           path: todos
+          cors: true
 
   # # TODO: Configure this function
   UpdateTodo:
@@ -66,7 +78,7 @@ functions:
           path: todos/{todoId}
           cors: true
 
-  # # TODO: Configure this function
+
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
     events:
@@ -75,13 +87,14 @@ functions:
           path: todos/{todoId}
           cors: true
 
-  # # TODO: Configure this function
-  # GenerateUploadUrl:
-  #   handler: src/lambda/http/generateUploadUrl.handler
-  #   events:
-  #     - http:
-  #         method: post
-  #         path: todos/{todoId}/attachment
+
+  GenerateUploadUrl:
+    handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      - http:
+          method: post
+          path: todos/{todoId}/attachment
+          cors: true
 
 resources:
   Resources:
@@ -100,3 +113,40 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
+
+    # add S3 buckte to store images
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.TODOS_IMAGES_S3_BUCKET}
+    # important so S3 can send the correct CORS HEADERS
+        CorsConfiguration:
+          CorsRules:
+            -
+              AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+    # Add BucketPolicy to allow to read images in our application
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: MyPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              # allows for anybody '*' to get objects of our s3 bucket
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*'
+      # specify which bucket this bucketPolicy should be applied
+        Bucket: !Ref AttachmentsBucket

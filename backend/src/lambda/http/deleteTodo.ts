@@ -22,13 +22,16 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     },
   }).promise()
 
+  // TODO!!!!!!!!!!!
+  // we need to delete the image in S3 buckt if it is there
+
 
   return {
     statusCode: 200,
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    body: JSON.stringify(result)
+    body: "item was deleted: " + JSON.stringify(result)
   }
 
 

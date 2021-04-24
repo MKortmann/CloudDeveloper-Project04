@@ -11,6 +11,9 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 // get the todo table name to save the item
 const todosTable = process.env.TODOS_TABLE;
 
+//s3Bucket for image url
+const s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET;
+
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
   console.log("At create function");
@@ -23,8 +26,14 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   // new todo
   const todoItem = {
     id,
-    ...parsedBody
+    ...parsedBody,
+    imageUrl: `https://${s3Bucket}.s3.amazonaws.com/${id}`
   }
+
+  // here is missing the pressigned Url
+  // WE need to call the generateUploadUrl, then it will return an URL
+  // THEN WE UPLOAD IT TO THE URL;
+  // AND THEN WE ADD the url IT TO THE NEWTODOITEM TO BE ABLE TO FETCH THE TODO WITH THE URL
 
   console.log("item created:", todoItem)
 
