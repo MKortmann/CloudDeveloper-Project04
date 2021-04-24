@@ -24,6 +24,8 @@ provider:
     TODOS_IMAGES_S3_BUCKET: ${self:service.name}-images-${self:provider.stage}
     # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
     TODOS_SIGNED_URL_EXPIRATION: 600
+    # we use this auth_secret generated from Auth to verify JWT Tokens
+    AUTH_0_SECRET: 2LULKhsESZTona0KrTvI-XcAlz5XMVQNqZYgHALFx8g5WzMJbdLrHZA0x-tyDVC4
 
 
   # all the permissions here are global that means for all lambda functions
@@ -72,6 +74,8 @@ functions:
           method: post
           path: todos
           cors: true
+          # so we specified here that it should use the auth func. specified before
+          authorizer: Auth
 
   # # TODO: Configure this function
   UpdateTodo:
