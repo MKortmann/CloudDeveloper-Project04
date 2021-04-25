@@ -8,6 +8,9 @@ import { JwtPayload } from './JwtPayload'
  * @returns a user id from the JWT token
  */
 export function parseUserId(jwtToken: string): string {
+  console.log("At utils", jwtToken);
   const decodedJwt = decode(jwtToken) as JwtPayload
+  console.log("decodedJwt", decodedJwt);
+  console.log("decodedJwt.sub", decodedJwt.sub);
   return decodedJwt.sub
 }

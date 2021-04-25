@@ -24,8 +24,8 @@ provider:
     TODOS_IMAGES_S3_BUCKET: ${self:service.name}-images-${self:provider.stage}
     # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
     TODOS_SIGNED_URL_EXPIRATION: 600
-    # we use this auth_secret generated from Auth to verify JWT Tokens
-    AUTH_0_SECRET: 7IuIAQjcteEgS3RWy8b4jBtwI4ykAXh8OEZ39XZ82GzfqI1Hftm3_62696bkhoM1
+    # index name for the table
+    INDEX_NAME: dueDate
 
 
   # all the permissions here are global that means for all lambda functions
@@ -113,14 +113,20 @@ resources:
       Properties:
         # single id field of type string which is the partition key
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: todoId
             AttributeType: S
         # so, we set the simple primary key as hash key
         KeySchema:
-          - AttributeName: id
+          - AttributeName: userId
             KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
+
+
 
     # add S3 buckte to store images
     AttachmentsBucket:
