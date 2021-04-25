@@ -3,7 +3,7 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } f
 import * as AWS from 'aws-sdk';
 
 import { createLogger } from '../../utils/logger';
-import { parseUserId } from '../../auth/utils'
+import { parseUserId } from '../../auth/utils';
 
 const logger = createLogger('getTodos');
 

@@ -33,7 +33,6 @@ provider:
     # TODOS_TABLE permissions for all lambda functions
     - Effect: Allow
       Action:
-        - dynamodb:Scan
         - dynamodb:PutItem
         - dynamodb:DeleteItem
         - dynamodb:UpdateItem
