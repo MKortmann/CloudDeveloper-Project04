@@ -64,22 +64,30 @@ export const handler: CustomAuthorizerHandler = async (
   }
 }
 
+// more info
+// https://auth0.com/blog/navigating-rs256-and-jwks/
 
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader);
+  // Decode the JWT
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
+  // get the kid property from the header
   const jwtKid = jwt.header.kid
   let cert: string | Buffer
 
   try {
     const jwks = await Axios.get(jwksUrl);
-    const signingKey = jwks.data.keys.filter(k => k.kid === jwtKid)[0];
+    // kid: is the unique identifier for the key
+    const signing = jwks.data.keys.filter(k => k.kid === jwtKid)[0];
+
+    logger.info("signInKey", signing);
 
 
-  if (!signingKey) {
+  if (!signing) {
     throw new Error(`Unable to find a signing key that matches '${jwtKid}'`);
   }
-  const { x5c } = signingKey;
+  // extract the x509 certificate chain
+  const { x5c } = signing;
 
   cert = `-----BEGIN CERTIFICATE-----\n${x5c[0]}\n-----END CERTIFICATE-----`;
 
@@ -102,3 +110,5 @@ function getToken(authHeader: string): string {
 
   return token
 }
+
+
