@@ -44,19 +44,19 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
 
   // new todo
-  const todoItem = {
+  const item = {
     userId,
     todoId,
     ...parsedBody,
     imageUrl: `https://${s3Bucket}.s3.amazonaws.com/${todoId}`
   }
 
-  console.log("item created:", todoItem)
+  console.log("item created:", item)
 
   // add this to dynamoDB
   await docClient.put({
     TableName: todosTable,
-    Item: todoItem
+    Item: item
   }).promise()
 
   // Return result
@@ -66,7 +66,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
       'Access-Control-Allow-Origin': '*'
     },
     body: JSON.stringify({
-      todoItem
+      item
     })
   }
 
