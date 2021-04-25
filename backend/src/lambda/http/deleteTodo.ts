@@ -21,12 +21,12 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     event
   })
 
-    // to get the user id
-    const authorization = event.headers.Authorization
-    const split = authorization.split(' ')
-    const jwtToken = split[1]
-    const userId = parseUserId(jwtToken);
-    console.log("userId", userId)
+  // to get the user id
+  const authorization = event.headers.Authorization
+  const split = authorization.split(' ')
+  const jwtToken = split[1]
+  const userId = parseUserId(jwtToken);
+  console.log("userId", userId)
 
   const result = await docClient.delete({
     TableName: todosTable,

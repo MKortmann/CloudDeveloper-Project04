@@ -5,6 +5,7 @@ import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import * as AWS from 'aws-sdk';
 
 import { createLogger } from '../../utils/logger';
+import { parseUserId } from '../../auth/utils';
 
 const logger = createLogger('updateTodos');
 
@@ -23,11 +24,19 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     updatedTodo
   })
 
+  // to get the user id
+  const authorization = event.headers.Authorization
+  const split = authorization.split(' ')
+  const jwtToken = split[1]
+  const userId = parseUserId(jwtToken);
+  console.log("userId", userId)
+
   let todoToBeUpdate = await docClient.query({
     TableName: todosTable,
-    KeyConditionExpression: 'id = :id',
+    KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
     ExpressionAttributeValues: {
-      ':id': todoId
+      ':userId': userId,
+      ':todoId': todoId
   }
   }).promise()
 
@@ -45,7 +54,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const todoUpdated = await docClient.update({
     TableName: todosTable,
     Key: {
-      id: todoId
+      userId,
+      todoId
     },
     UpdateExpression: "set #name =:name, #dueDate=:dueDate, #done=:done",
     ExpressionAttributeValues: {
