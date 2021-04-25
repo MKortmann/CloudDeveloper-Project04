@@ -3,7 +3,7 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } f
 import * as AWS from 'aws-sdk';
 
 import { createLogger } from '../../utils/logger';
-// import { parseUserId } from '../../auth/utils'
+import { parseUserId } from '../../auth/utils'
 
 const logger = createLogger('getTodos');
 
@@ -19,22 +19,24 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     event
   })
 
-  // to get the userId
-  const authorization = event.headers.Authorization;
-  console.log("Authorization", authorization)
-  // const userId = parseUserId(authorization)
+  // to get the user id
+  const authorization = event.headers.Authorization
+  const split = authorization.split(' ')
+  const jwtToken = split[1]
+  const userId = parseUserId(jwtToken);
+  console.log("userId", userId)
 
-  // const result = await docClient.query({
-  //   TableName: todosTable,
-  //   IndexName: userId,
-  //   KeyConditionExpression: 'userId = :userId',
-  //   ExpressionAttributeValues: {
-  //     ':userId': userId
-  //   }
-  // }).promise()
-  const result = await docClient.scan({
-    TableName: todosTable
+  const result = await docClient.query({
+    TableName: todosTable,
+    KeyConditionExpression: 'userId = :userId',
+    ExpressionAttributeValues: {
+      ':userId': userId
+    }
   }).promise()
+
+  // const result = await docClient.scan({
+  //   TableName: todosTable
+  // }).promise()
 
   const items = result.Items;
 

@@ -34,8 +34,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   console.log(event.headers.Authorization);
 
-
-  //
   // to get the user id
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')
