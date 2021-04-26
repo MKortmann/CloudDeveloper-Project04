@@ -51,7 +51,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     }
   }
 
-  const todoUpdated = await docClient.update({
+  await docClient.update({
     TableName: todosTable,
     Key: {
       userId,
@@ -73,6 +73,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    body: JSON.stringify(todoUpdated)
+    // body: "Item updated" + JSON.stringify(todoUpdated)
+    body: ''
   }
 }

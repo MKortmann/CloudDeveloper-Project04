@@ -47,8 +47,10 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const item = {
     userId,
     todoId,
+    createAt: new Date().toISOString(),
+    done: false,
     ...parsedBody,
-    imageUrl: `https://${s3Bucket}.s3.amazonaws.com/${todoId}`
+    attachmentUrl: `https://${s3Bucket}.s3.amazonaws.com/${todoId}`
   }
 
   console.log("item created:", item)

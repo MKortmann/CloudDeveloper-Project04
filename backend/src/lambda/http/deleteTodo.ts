@@ -28,7 +28,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const userId = parseUserId(jwtToken);
   console.log("userId", userId)
 
-  const result = await docClient.delete({
+  await docClient.delete({
     TableName: todosTable,
     Key: {
       userId,
@@ -47,7 +47,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    body: "item was deleted: " + JSON.stringify(result)
+    body: ''
   }
 
 
