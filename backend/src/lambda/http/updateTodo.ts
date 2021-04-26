@@ -41,6 +41,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }).promise()
 
 
+  logger.info('Item to be updated', todoToBeUpdate);
+
   if(todoToBeUpdate.Items.length === 0) {
     return {
       statusCode: 404,
@@ -51,21 +53,40 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     }
   }
 
-  await docClient.update({
-    TableName: todosTable,
-    Key: {
-      userId,
-      todoId
-    },
-    UpdateExpression: "set #name =:name, #dueDate=:dueDate, #done=:done",
-    ExpressionAttributeValues: {
-      ":name": updatedTodo.name,
-      ":dueDate": updatedTodo.dueDate,
-      ":done": updatedTodo.done
-    },
-    ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate", "#done": "done"},
-    ReturnValues: "UPDATED_NEW"
-  }).promise()
+  // I let the done property as optional
+  if(!updatedTodo.hasOwnProperty("done")) {
+    await docClient.update({
+      TableName: todosTable,
+      Key: {
+        userId,
+        todoId
+      },
+      UpdateExpression: "set #name =:name, #dueDate=:dueDate",
+      ExpressionAttributeValues: {
+        ":name": updatedTodo.name,
+        ":dueDate": updatedTodo.dueDate,
+      },
+      ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate"},
+      ReturnValues: "UPDATED_NEW"
+    }).promise()
+
+  } else {
+    await docClient.update({
+      TableName: todosTable,
+      Key: {
+        userId,
+        todoId
+      },
+      UpdateExpression: "set #name =:name, #dueDate=:dueDate, #done=:done",
+      ExpressionAttributeValues: {
+        ":name": updatedTodo.name,
+        ":dueDate": updatedTodo.dueDate,
+        ":done": updatedTodo.done
+      },
+      ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate", "#done": "done"},
+      ReturnValues: "UPDATED_NEW"
+    }).promise()
+  }
 
 
   return {
@@ -73,7 +94,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     headers: {
       'Access-Control-Allow-Origin': '*'
     },
-    // body: "Item updated" + JSON.stringify(todoUpdated)
     body: ''
   }
 }
