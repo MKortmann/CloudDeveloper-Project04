@@ -26,6 +26,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const userId = parseUserId(jwtToken);
   console.log("userId", userId)
 
+  logger.info("userId", userId)
+
   const result = await docClient.query({
     TableName: todosTable,
     KeyConditionExpression: 'userId = :userId',

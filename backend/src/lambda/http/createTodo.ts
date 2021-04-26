@@ -20,19 +20,14 @@ const s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET;
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-  console.log("At create function");
+  logger.info('Processing createTodo Event: ', {
+    event
+  })
   // getting the body
   const parsedBody: CreateTodoRequest = JSON.parse(event.body)
 
   // creating a new uuid for this Todo Item
   const todoId = uuid.v4();
-
-  logger.info('Processing createTodo Event: ', {
-    event
-  })
-
-
-  console.log(event.headers.Authorization);
 
   // to get the user id
   const authorization = event.headers.Authorization
@@ -40,8 +35,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const jwtToken = split[1]
   const userId = parseUserId(jwtToken);
 
-  console.log("userId", userId)
-
+  logger.info("userId", userId);
 
   // new todo
   const item = {
@@ -53,7 +47,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     attachmentUrl: `https://${s3Bucket}.s3.amazonaws.com/${todoId}`
   }
 
-  console.log("item created:", item)
+  logger.info("item created", item)
 
   // add this to dynamoDB
   await docClient.put({

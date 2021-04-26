@@ -17,7 +17,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const todoId = event.pathParameters.todoId;
 
   // deleting the image object
-  logger.info('Read to delete an image: ', {
+  logger.info('At delete lambda function', {
     event
   })
 
@@ -27,6 +27,26 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const jwtToken = split[1]
   const userId = parseUserId(jwtToken);
   console.log("userId", userId)
+
+  let todoToBeDeleted = await docClient.query({
+    TableName: todosTable,
+    KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
+    ExpressionAttributeValues: {
+      ':userId': userId,
+      ':todoId': todoId
+  }
+  }).promise()
+
+
+  if(todoToBeDeleted.Items.length === 0) {
+    return {
+      statusCode: 404,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: 'The item to be deleted was not found'
+    }
+  }
 
   await docClient.delete({
     TableName: todosTable,
