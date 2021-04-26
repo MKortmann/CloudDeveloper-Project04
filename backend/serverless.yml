@@ -30,20 +30,10 @@ provider:
 
   # all the permissions here are global that means for all lambda functions
   iamRoleStatements:
-    # TODOS_TABLE permissions for all lambda functions
-    - Effect: Allow
-      Action:
-        - dynamodb:PutItem
-        - dynamodb:DeleteItem
-        - dynamodb:UpdateItem
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-    # add permissions to be able to put and get objects for our s3 bucket
+    # add permissions to be able to put objects for our s3 bucket
     - Effect: Allow
       Action:
         - s3:PutObject
-        - s3:GetObject
-        - s3:DeleteObject
       Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
 
@@ -63,7 +53,12 @@ functions:
           cors: true
           # so we specified here that it should use the auth func. specified before
           authorizer: Auth
-
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # # TODO: Configure this function
   CreateTodo:
@@ -75,6 +70,12 @@ functions:
           cors: true
           # so we specified here that it should use the auth func. specified before
           authorizer: Auth
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # # TODO: Configure this function
   UpdateTodo:
@@ -85,7 +86,13 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
@@ -95,6 +102,18 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      # add permissions to be able to put and get objects for our s3 bucket
+      - Effect: Allow
+        Action:
+          - s3:DeleteObject
+        Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
 
   GenerateUploadUrl:
@@ -105,6 +124,11 @@ functions:
           path: todos/{todoId}/attachment
           cors: true
           authorizer: Auth
+    iamRoleStatemens:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+        Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
 resources:
   Resources:
