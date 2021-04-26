@@ -191,8 +191,7 @@ resources:
     # important so S3 can send the correct CORS HEADERS
         CorsConfiguration:
           CorsRules:
-            -
-              AllowedOrigins:
+            - AllowedOrigins:
                 - '*'
               AllowedHeaders:
                 - '*'
