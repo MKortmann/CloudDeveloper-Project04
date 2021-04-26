@@ -16,7 +16,7 @@ const todosTable = process.env.TODOS_TABLE;
 const logger = createLogger('createTodo');
 
 //s3Bucket for image url
-const s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET;
+// const s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET;
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
@@ -44,7 +44,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     createAt: new Date().toISOString(),
     done: false,
     ...parsedBody,
-    attachmentUrl: `https://${s3Bucket}.s3.amazonaws.com/${todoId}`
+    attachmentUrl: ""
   }
 
   logger.info("item created", item)

@@ -31,15 +31,6 @@ provider:
     # index name for the table
     INDEX_NAME: dueDate
 
-
-  # all the permissions here are global that means for all lambda functions
-  # iamRoleStatements:
-  #   # add permissions to be able to put objects for our s3 bucket
-  #   - Effect: Allow
-  #     Action:
-  #       - s3:PutObject
-  #     Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
-
 # to define models to our api we need to define models for our object in custom
 custom:
   documentation:
@@ -101,6 +92,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
+          - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # # TODO: Configure this function
@@ -147,7 +139,7 @@ functions:
           - s3:DeleteObject
         Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
-
+# add permissions
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
@@ -156,11 +148,16 @@ functions:
           path: todos/{todoId}/attachment
           cors: true
           authorizer: Auth
-    iamRoleStatemens:
+    iamRoleStatements:
       - Effect: Allow
         Action:
           - s3:PutObject
         Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 resources:
   Resources:
