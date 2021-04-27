@@ -11,7 +11,7 @@ export class TodoAccess {
 
   constructor(
     // DocumentClient allows us to work with DynamoDB
-    private readonly docClient: DocumentClient = createDynamoDBClient(),
+    private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
     private readonly s3 = new AWS.S3({  signatureVersion: 'v4'}),
     private readonly s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET,
@@ -156,6 +156,23 @@ export class TodoAccess {
       body: ""
     };
 
+    let checkIfExist = await this.docClient.query({
+      TableName: this.todosTable,
+      KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':todoId': todoId
+    }
+    }).promise()
+
+    if(checkIfExist.Items.length === 0) {
+      result = {
+        statusCode: 404,
+        body: "The item to be update was not found"
+      };
+      return result
+    }
+
     await this.docClient.update({
       TableName: this.todosTable,
       Key: {
@@ -176,22 +193,7 @@ export class TodoAccess {
       Expires: this.urlExpiration
     })
 
-    return result;
+  return result;
 
   }
 }
-
-function createDynamoDBClient() {
-  // if you are offline, serverless offline will set this variable IS_OFFLINE to true
-  // if (process.env.IS_OFFLINE) {
-  //   console.log('Creating a local DynamoDB instance')
-  //   return new AWS.DynamoDB.DocumentClient({
-  //     region: 'localhost',
-  //     endpoint: 'http://localhost:8000'
-  //   })
-  // }
-
-  return new AWS.DynamoDB.DocumentClient()
-}
-
-

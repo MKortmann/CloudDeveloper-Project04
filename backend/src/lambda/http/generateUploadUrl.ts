@@ -20,25 +20,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   const split = authorization.split(' ')
   const jwtToken = split[1]
 
-  // let todoToBeUpdate = await docClient.query({
-  //   TableName: todosTable,
-  //   KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
-  //   ExpressionAttributeValues: {
-  //     ':userId': userId,
-  //     ':todoId': todoId
-  // }
-  // }).promise()
-
-  // if(todoToBeUpdate.Items.length === 0) {
-  //   return {
-  //     statusCode: 404,
-  //     headers: {
-  //       'Access-Control-Allow-Origin': '*'
-  //     },
-  //     body: 'The item to be update was not found'
-  //   }
-  // }
-
 
   const result = await generateUploadUrl(jwtToken, todoId)
 
