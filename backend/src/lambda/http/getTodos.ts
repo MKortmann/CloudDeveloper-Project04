@@ -1,31 +1,38 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-// import 'source-map-support';
-import { createLogger } from '../../utils/logger';
+import 'source-map-support/register'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { createLogger } from '../../utils/logger'
 import { getTodos } from '../../businessLogic/todos'
-import { getToken } from '../utils';
+import { getToken } from '../utils'
+import * as middy from 'middy'
+import { cors } from 'middy/middlewares'
 
-const logger = createLogger('getTodos');
+const logger = createLogger('getTodos')
 
+export const handler = middy(
+	async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+		console.log('Processing event: ', event)
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  console.log('Processing event: ', event)
+		logger.info('Processing getTodos Event: ', {
+			event
+		})
 
-  logger.info('Processing getTodos Event: ', {
-    event
-  })
+		const jwtToken = getToken(event)
+		const items = await getTodos(jwtToken)
 
-  // to get the user jwtToken from header
-  const jwtToken = getToken(event);
-  const items = await getTodos(jwtToken);
+		return {
+			statusCode: 200,
+			headers: {
+				'Access-Control-Allow-Origin': '*'
+			},
+			body: JSON.stringify({
+				items
+			})
+		}
+	}
+)
 
-  // Return result
-  return {
-    statusCode: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*'
-    },
-    body: JSON.stringify({
-      items
-    })
-  }
-}
+handler.use(
+	cors({
+		credentials: true
+	})
+)

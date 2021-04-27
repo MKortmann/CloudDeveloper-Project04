@@ -4,23 +4,22 @@ service:
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-# I need serverless-aws-documentation & serverless-reqvalidator-plugin to allows us to
-# validate our http income request using schema
+  # I need serverless-aws-documentation & serverless-reqvalidator-plugin to allows us to
+  # validate our http income request using schema
   - serverless-aws-documentation
   - serverless-reqvalidator-plugin
-# to run it locally
+  # to run it locally
   - serverless-offline
   - serverless-dynamodb-local
-# Add Canary Deployment to be able to deploy our neu func. step by step
+  # Add Canary Deployment to be able to deploy our neu func. step by step
   - serverless-plugin-canary-deployments
-
 
 provider:
   name: aws
   runtime: nodejs12.x
 
   tracing:
-  # enable tracing for our lambda and apiGateway
+    # enable tracing for our lambda and apiGateway
     lambda: true
     apiGateway: true
 
@@ -43,7 +42,7 @@ provider:
     INDEX_NAME: dueDate
 
   iamRoleStatements:
-  # for canary deployment to allow to use codedeploy
+    # for canary deployment to allow to use codedeploy
     - Effect: Allow
       Action:
         - codedeploy:*
@@ -80,7 +79,6 @@ custom:
         schema: ${file(models/update-todo-request.json)}
 
 functions:
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
@@ -149,9 +147,9 @@ functions:
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
   # adding deployment settings for canary deployment, but commented because of
-    # deploymentSettings:
-    #   type: Linear10Percent1Minute
-    #   alias: Live
+  # deploymentSettings:
+  #   type: Linear10Percent1Minute
+  #   alias: Live
 
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
@@ -174,7 +172,7 @@ functions:
           - s3:DeleteObject
         Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
-# add permissions
+  # add permissions
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
@@ -216,14 +214,12 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
 
-
-
     # add S3 buckte to store images
     AttachmentsBucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:provider.environment.TODOS_IMAGES_S3_BUCKET}
-    # important so S3 can send the correct CORS HEADERS
+        # important so S3 can send the correct CORS HEADERS
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
@@ -243,7 +239,7 @@ resources:
       Properties:
         PolicyDocument:
           Id: MyPolicy
-          Version: "2012-10-17"
+          Version: '2012-10-17'
           Statement:
             - Sid: PublicReadForGetBucketObjects
               Effect: Allow
@@ -251,7 +247,7 @@ resources:
               Principal: '*'
               Action: 's3:GetObject'
               Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*'
-      # specify which bucket this bucketPolicy should be applied
+        # specify which bucket this bucketPolicy should be applied
         Bucket: !Ref AttachmentsBucket
 
     # we need to provide correct CORS headers if our customer authorizer
@@ -267,7 +263,7 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
 
-# we need additional Resources to validate our http requests through a schema
+    # we need additional Resources to validate our http requests through a schema
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
       # we need a name and an id of the api which we will use
@@ -275,6 +271,6 @@ resources:
         Name: 'request-body-validator'
         RestApiId:
           Ref: ApiGatewayRestApi
-      # it only validate body requests and not request parameters
+        # it only validate body requests and not request parameters
         ValidateRequestBody: true
         ValidateRequestParameters: false
