@@ -1,12 +1,16 @@
 // Contains all business logic to work with groups in our application
 
-// import * as uuid from 'uuid'
+import * as uuid from 'uuid'
 
 import { TodoItem } from '../models/TodoItem'
 // import { TodoUpdate } from '../models/TodoUpdate'
 import { TodoAccess } from '../dataLayer/todosAccess'
-// import { CreateTodoRequest } from '../requests/CreateTodoRequest'
+import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { parseUserId } from '../auth/utils'
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('todos')
+
 
 // all code that works with DynamoDB is encapsulated in the dataLayer called TodoAccess
 const todoAccess = new TodoAccess()
@@ -26,6 +30,31 @@ export async function deleteTodo(jwtToken: string, todoId: string) {
   return toReturn;
 }
 
+export async function createTodo(jwtToken: string, parsedBody: CreateTodoRequest) {
+
+  const userId = parseUserId(jwtToken);
+  const todoId = uuid.v4();
+
+  logger.info("userId", userId);
+  logger.info("todoId", todoId);
+
+  // new todo
+  const item = {
+    userId,
+    todoId,
+    createdAt: new Date().toISOString(),
+    done: false,
+    ...parsedBody,
+    attachmentUrl: ""
+  }
+
+  logger.info("Item to be created at business logic", item);
+  const toReturn = todoAccess.createTodo(item);
+
+  return toReturn;
+
+
+}
 // export async function createTodo(
 //   createGroupRequest: CreateTodoRequest,
 //   jwtToken: string

@@ -73,14 +73,14 @@ export class TodoAccess {
 
   }
 
-  // async createTodo(todo: todoItem): Promise<TodoItem> {
-  //   await this.docClient.put({
-  //     TableName: this.todosTable,
-  //     Item: todo
-  //   }).promise()
+  async createTodo(todo: TodoItem): Promise<TodoItem> {
+    await this.docClient.put({
+      TableName: this.todosTable,
+      Item: todo
+    }).promise()
 
-  //   return todo
-  // }
+    return todo
+  }
 }
 
 function createDynamoDBClient() {
