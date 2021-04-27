@@ -1,19 +1,84 @@
 service:
-  name: serverless-todo-app
+  name: serverless-todo-app-linux
 
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  # I need serverless-aws-documentation & serverless-reqvalidator-plugin to allows us to
+  # validate our http income request using schema
+  - serverless-aws-documentation
+  - serverless-reqvalidator-plugin
+  # to run it locally
+  - serverless-offline
+  - serverless-dynamodb-local
+  # Add Canary Deployment to be able to deploy our neu func. step by step
+  - serverless-plugin-canary-deployments
 
 provider:
   name: aws
   runtime: nodejs12.x
 
+  tracing:
+    # enable tracing for our lambda and apiGateway
+    lambda: true
+    apiGateway: true
+
+  # it should use the option provide in the CLI if it is set, if not, use dev.
+  # so, if you deploy without use stage parameter, serverless will include dev
   stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'us-east-1'}
+  # if region is provide then use it, if not use 'eu-central-1'
+  region: ${opt:region, 'eu-central-1'}
+
+  # global environment variables
+  environment:
+    # The DynamoDB table have unique names. They need to be unique per account per region
+    # Names are UTF-8 encoded, case-sensitive and should be between 3 and 255 charaters long
+    TODOS_TABLE: ${self:service.name}-Todos-${self:provider.stage}
+    # bucket name should not contain uppgercase characters
+    TODOS_IMAGES_S3_BUCKET: ${self:service.name}-images-${self:provider.stage}
+    # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
+    TODOS_SIGNED_URL_EXPIRATION: 700
+    # index name for the table
+    INDEX_NAME: dueDate
+
+  iamRoleStatements:
+    # for canary deployment to allow to use codedeploy
+    - Effect: Allow
+      Action:
+        - codedeploy:*
+      Resource:
+        - '*'
+
+# to define models to our api we need to define models for our object in custom
+custom:
+  serverless-offline:
+    port: 3000
+  dynamodb:
+    stages:
+      - ${self:provider.stage}
+    start:
+      port: 8000
+      # all the data will be store in memory
+      inMemory: true
+      # it should create tables as definitions provided
+      migrate: true
+
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Todo API
+        description: Serverless application for add/update/delete/edit todos
+    models:
+      - name: CreateTodo
+        contentType: application/json
+        schema: ${file(models/create-todo-request.json)}
+      - name: UpdateTodo
+        contentType: application/json
+        # the schema definition is a file that is located here
+        schema: ${file(models/update-todo-request.json)}
 
 functions:
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
@@ -24,40 +89,188 @@ functions:
       - http:
           method: get
           path: todos
+          # fix problem with preflight request
+          cors: true
+          # so we specified here that it should use the auth func. specified before
+          authorizer: Auth
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
-  # TODO: Configure this function
-  GetTodos:
+  # # TODO: Configure this function
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
     events:
       - http:
           method: post
           path: todos
+          cors: true
+          # so we specified here that it should use the auth func. specified before
+          authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+          documentation:
+            summary: Create a new todo item
+            description: Create a todo item
+            requestModels:
+              'application/json': CreateTodo
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
-  # TODO: Configure this function
+  # # TODO: Configure this function
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
     events:
       - http:
           method: patch
           path: todos/{todoId}
+          cors: true
+          authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+          documentation:
+            summary: Update a todo item
+            description: Update a todo item
+            requestModels:
+              'application/json': UpdateTodo
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+  # adding deployment settings for canary deployment, but commented because of
+  # deploymentSettings:
+  #   type: Linear10Percent1Minute
+  #   alias: Live
 
-  # TODO: Configure this function
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
     events:
       - http:
           method: delete
           path: todos/{todoId}
+          cors: true
+          authorizer: Auth
+    iamRoleStatements:
+      # TODOS_TABLE permissions for all lambda functions
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      # add permissions to be able to put and get objects for our s3 bucket
+      - Effect: Allow
+        Action:
+          - s3:DeleteObject
+        Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
 
-  # TODO: Configure this function
+  # add permissions
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
           path: todos/{todoId}/attachment
+          cors: true
+          authorizer: Auth
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+        Resource: arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 resources:
   Resources:
-    # TODO: Add any necessary AWS resources
+    # Add DynamoDB Table Definition
+    # DynamoDB is schemaless, we need to define only the primary key and global secondary keys.
+    TodosDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        # single id field of type string which is the partition key
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: todoId
+            AttributeType: S
+        # so, we set the simple primary key as hash key
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TODOS_TABLE}
+
+    # add S3 buckte to store images
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.TODOS_IMAGES_S3_BUCKET}
+        # important so S3 can send the correct CORS HEADERS
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+    # Add BucketPolicy to allow to read images in our application
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: MyPolicy
+          Version: '2012-10-17'
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              # allows for anybody '*' to get objects of our s3 bucket
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_IMAGES_S3_BUCKET}/*'
+        # specify which bucket this bucketPolicy should be applied
+        Bucket: !Ref AttachmentsBucket
+
+    # we need to provide correct CORS headers if our customer authorizer
+    # denies access to any functions. It set correct CORS headers if our customer authorizer fails.
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+    # we need additional Resources to validate our http requests through a schema
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      # we need a name and an id of the api which we will use
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        # it only validate body requests and not request parameters
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
