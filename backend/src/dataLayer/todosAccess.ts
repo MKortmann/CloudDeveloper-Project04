@@ -13,7 +13,10 @@ export class TodoAccess {
   constructor(
     // DocumentClient allows us to work with DynamoDB
     private readonly docClient: DocumentClient = createDynamoDBClient(),
-    private readonly todosTable = process.env.TODOS_TABLE) {
+    private readonly todosTable = process.env.TODOS_TABLE,
+    private readonly s3 = new AWS.S3(),
+    private readonly s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET
+    ) {
   }
 
   async getTodos(userId): Promise<TodoItem[]> {
@@ -30,6 +33,44 @@ export class TodoAccess {
 
     const items = result.Items
     return items as TodoItem[]
+  }
+
+  async deleteItem(userId: string, todoId: string) {
+    let toReturn = {
+      statusCode: 200,
+      body: ""
+    };
+
+    let todoToBeDeleted = await this.docClient.query({
+      TableName: this.todosTable,
+      KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':todoId': todoId
+    }
+    }).promise()
+
+    if(todoToBeDeleted.Items.length === 0) {
+      toReturn.statusCode = 404;
+      toReturn.body = 'The item to be deleted was not found';
+    }
+
+    await this.docClient.delete({
+      TableName: this.todosTable,
+      Key: {
+        userId,
+        todoId
+       }
+      }).promise()
+
+
+    await this.s3.deleteObject({
+      Bucket: this.s3Bucket,
+      Key: todoId
+    }).promise()
+
+    return toReturn;
+
   }
 
   // async createTodo(todo: todoItem): Promise<TodoItem> {
