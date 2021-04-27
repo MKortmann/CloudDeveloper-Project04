@@ -8,6 +8,9 @@ plugins:
 # validate our http income request using schema
   - serverless-aws-documentation
   - serverless-reqvalidator-plugin
+# to run it locally
+  - serverless-offline
+  - serverless-dynamodb-local
 
 provider:
   name: aws
@@ -33,6 +36,18 @@ provider:
 
 # to define models to our api we need to define models for our object in custom
 custom:
+  serverless-offline:
+    port: 3000
+  dynamodb:
+    stages:
+      - ${self:provider.stage}
+    start:
+      port: 8000
+      # all the data will be store in memory
+      inMemory: true
+      # it should create tables as definitions provided
+      migrate: true
+
   documentation:
     api:
       info:

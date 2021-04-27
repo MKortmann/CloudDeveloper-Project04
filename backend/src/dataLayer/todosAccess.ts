@@ -11,7 +11,7 @@ export class TodoAccess {
 
   constructor(
     // DocumentClient allows us to work with DynamoDB
-    private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
+    private readonly docClient: DocumentClient = createDynamoDBClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
     private readonly s3 = new AWS.S3({  signatureVersion: 'v4'}),
     private readonly s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET,
@@ -197,3 +197,16 @@ export class TodoAccess {
 
   }
 }
+function createDynamoDBClient(): AWS.DynamoDB.DocumentClient {
+    // if you are offline, serverless offline will set this variable IS_OFFLINE to true
+    if (process.env.IS_OFFLINE) {
+      console.log('Creating a local DynamoDB instance')
+      return new AWS.DynamoDB.DocumentClient({
+        region: 'localhost',
+        endpoint: 'http://localhost:8000'
+      })
+    }
+
+    return new AWS.DynamoDB.DocumentClient()
+}
+
