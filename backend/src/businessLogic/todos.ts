@@ -60,10 +60,17 @@ export async function createTodo(jwtToken: string, parsedBody: CreateTodoRequest
 export async function updatedTodo(jwtToken: string, todoId: string, parsedBody: UpdateTodoRequest) {
 
   const userId = parseUserId(jwtToken);
-
   const result = todoAccess.updateTodo(userId, todoId, parsedBody);
 
   return result;
+}
+
+export async function generateUploadUrl(jwtToken: string, todoId: string ) {
+
+  const userId = parseUserId(jwtToken);
+  const result = todoAccess.generateUploadUrl(userId, todoId)
+
+  return result
 
 }
 

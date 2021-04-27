@@ -13,8 +13,9 @@ export class TodoAccess {
     // DocumentClient allows us to work with DynamoDB
     private readonly docClient: DocumentClient = createDynamoDBClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
-    private readonly s3 = new AWS.S3(),
-    private readonly s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET
+    private readonly s3 = new AWS.S3({  signatureVersion: 'v4'}),
+    private readonly s3Bucket = process.env.TODOS_IMAGES_S3_BUCKET,
+    private readonly urlExpiration = process.env.TODOS_SIGNED_URL_EXPIRATION
     ) {
   }
 
@@ -145,6 +146,37 @@ export class TodoAccess {
   }
 
   return result
+
+  }
+
+  async generateUploadUrl(userId, todoId) {
+
+    let result = {
+      statusCode: 201,
+      body: ""
+    };
+
+    await this.docClient.update({
+      TableName: this.todosTable,
+      Key: {
+        userId,
+        todoId
+      },
+      UpdateExpression: "set #attachmentUrl =:attachmentUrl",
+      ExpressionAttributeValues: {
+        ":attachmentUrl": `https://${this.s3Bucket}.s3.amazonaws.com/${todoId}`,
+      },
+      ExpressionAttributeNames: {"#attachmentUrl": "attachmentUrl"},
+      ReturnValues: "UPDATED_NEW"
+    }).promise()
+
+    result.body = this.s3.getSignedUrl('putObject', {
+      Bucket: this.s3Bucket,
+      Key: todoId,
+      Expires: this.urlExpiration
+    })
+
+    return result;
 
   }
 }
