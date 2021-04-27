@@ -19,6 +19,11 @@ provider:
   name: aws
   runtime: nodejs12.x
 
+  tracing:
+  # enable tracing for our lambda and apiGateway
+    lambda: true
+    apiGateway: true
+
   # it should use the option provide in the CLI if it is set, if not, use dev.
   # so, if you deploy without use stage parameter, serverless will include dev
   stage: ${opt:stage, 'dev'}
