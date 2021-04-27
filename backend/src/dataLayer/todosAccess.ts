@@ -12,15 +12,11 @@ export class TodoAccess {
 
   constructor(
     // DocumentClient allows us to work with DynamoDB
-    // groupsTable is the table where we store the names about our groups
     private readonly docClient: DocumentClient = createDynamoDBClient(),
     private readonly todosTable = process.env.TODOS_TABLE) {
   }
 
   async getTodos(userId): Promise<TodoItem[]> {
-    console.log('Getting all todos');
-    console.log('tableName', this.todosTable);
-    console.log('userId', userId);
 
     const result = await this.docClient.query({
       TableName: this.todosTable,
@@ -29,8 +25,6 @@ export class TodoAccess {
         ':userId': userId
       }
     }).promise()
-
-    console.log('Result', result);
 
     logger.info("Result", result)
 

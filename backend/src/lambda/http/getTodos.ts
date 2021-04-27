@@ -15,28 +15,10 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     event
   })
 
-  // to get the user id
+  // to get the user jwtToken from header
   const authorization = event.headers.Authorization
   const split = authorization.split(' ')
   const jwtToken = split[1]
-  // const userId = parseUserId(jwtToken);
-  // console.log("userId", userId)
-
-  // logger.info("userId", userId)
-
-  // const result = await docClient.query({
-  //   TableName: todosTable,
-  //   KeyConditionExpression: 'userId = :userId',
-  //   ExpressionAttributeValues: {
-  //     ':userId': userId
-  //   }
-  // }).promise()
-
-  // const result = await docClient.scan({
-  //   TableName: todosTable
-  // }).promise()
-
-  // const items = result.Items;
 
   const items = await getTodos(jwtToken);
 
