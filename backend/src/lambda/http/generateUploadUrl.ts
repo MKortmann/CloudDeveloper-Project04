@@ -23,10 +23,6 @@ export const handler = middy(
 		// return a presigned URL to upload a file for a TODO item with the provided id
 		return {
 			statusCode: result.statusCode,
-			headers: {
-				'Access-Control-Allow-Origin': '*',
-				'Access-Control-Allow-Credentials': true
-			},
 			body: JSON.stringify({
 				uploadUrl: result.body
 			})

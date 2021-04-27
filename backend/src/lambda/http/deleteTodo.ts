@@ -21,9 +21,6 @@ export const handler = middy(
 
 		return {
 			statusCode: result.statusCode,
-			headers: {
-				'Access-Control-Allow-Origin': '*'
-			},
 			body: result.body
 		}
 	}
