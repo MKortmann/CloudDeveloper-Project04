@@ -11,6 +11,9 @@ plugins:
 # to run it locally
   - serverless-offline
   - serverless-dynamodb-local
+# Add Canary Deployment to be able to deploy our neu func. step by step
+  - serverless-plugin-canary-deployments
+
 
 provider:
   name: aws
@@ -30,9 +33,17 @@ provider:
     # bucket name should not contain uppgercase characters
     TODOS_IMAGES_S3_BUCKET: ${self:service.name}-images-${self:provider.stage}
     # add a presigned url for the upload url s3 bucket - 10 minutes expiration time
-    TODOS_SIGNED_URL_EXPIRATION: 600
+    TODOS_SIGNED_URL_EXPIRATION: 700
     # index name for the table
     INDEX_NAME: dueDate
+
+  iamRoleStatements:
+  # for canary deployment to allow to use codedeploy
+    - Effect: Allow
+      Action:
+        - codedeploy:*
+      Resource:
+        - '*'
 
 # to define models to our api we need to define models for our object in custom
 custom:
@@ -132,6 +143,10 @@ functions:
           - dynamodb:Query
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+  # adding deployment settings for canary deployment, but commented because of
+    # deploymentSettings:
+    #   type: Linear10Percent1Minute
+    #   alias: Live
 
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
