@@ -6,6 +6,7 @@ import { TodoItem } from '../models/TodoItem'
 // import { TodoUpdate } from '../models/TodoUpdate'
 import { TodoAccess } from '../dataLayer/todosAccess'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
+import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
 import { parseUserId } from '../auth/utils'
 import { createLogger } from '../utils/logger';
 
@@ -55,22 +56,14 @@ export async function createTodo(jwtToken: string, parsedBody: CreateTodoRequest
 
 
 }
-// export async function createTodo(
-//   createGroupRequest: CreateTodoRequest,
-//   jwtToken: string
-// ): Promise<TodoItem> {
 
-//   const itemId = uuid.v4()
-//   const userId = parseUserId(jwtToken)
+export async function updatedTodo(jwtToken: string, todoId: string, parsedBody: UpdateTodoRequest) {
 
-//   return await todoAccess.createTodo({
-//     id: itemId,
-//     userId: userId,
-//     name: createGroupRequest.name,
-//     description: createGroupRequest.description,
-//     timestamp: new Date().toISOString(),
-//     timestamp2: new Date().toISOString(),
-//     newField: "to test",
-//     newField2: "Canary10Percent30Minutes"
-//   })
-// }
+  const userId = parseUserId(jwtToken);
+
+  const result = todoAccess.updateTodo(userId, todoId, parsedBody);
+
+  return result;
+
+}
+

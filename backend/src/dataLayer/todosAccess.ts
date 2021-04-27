@@ -1,10 +1,9 @@
 
 import * as AWS  from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
-
 import { createLogger } from '../utils/logger';
-
-import { TodoItem } from '../models/TodoItem'
+import { TodoItem } from '../models/TodoItem';
+import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
 
 const logger = createLogger('todosAccess');
 
@@ -36,7 +35,7 @@ export class TodoAccess {
   }
 
   async deleteItem(userId: string, todoId: string) {
-    let toReturn = {
+    let result = {
       statusCode: 200,
       body: ""
     };
@@ -51,8 +50,9 @@ export class TodoAccess {
     }).promise()
 
     if(todoToBeDeleted.Items.length === 0) {
-      toReturn.statusCode = 404;
-      toReturn.body = 'The item to be deleted was not found';
+      result.statusCode = 404;
+      result.body = 'The item to be deleted was not found';
+      return result;
     }
 
     await this.docClient.delete({
@@ -69,7 +69,7 @@ export class TodoAccess {
       Key: todoId
     }).promise()
 
-    return toReturn;
+    return result;
 
   }
 
@@ -80,6 +80,72 @@ export class TodoAccess {
     }).promise()
 
     return todo
+  }
+
+  async updateTodo(userId: string, todoId: string, parsedBody: UpdateTodoRequest) {
+
+    let result = {
+      statusCode: 200,
+      body: ""
+    };
+
+    let todoToBeUpdate = await this.docClient.query({
+      TableName: this.todosTable,
+      KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+        ':todoId': todoId
+    }
+    }).promise()
+
+
+    logger.info('Item to be updated', todoToBeUpdate);
+
+    if(todoToBeUpdate.Items.length === 0) {
+      result = {
+        statusCode: 404,
+        body: "The item to be update was not found"
+      };
+      return result
+    }
+
+      // I let the done property as optional
+  if(!parsedBody.hasOwnProperty("done")) {
+    await this.docClient.update({
+      TableName: this.todosTable,
+      Key: {
+        userId,
+        todoId
+      },
+      UpdateExpression: "set #name =:name, #dueDate=:dueDate",
+      ExpressionAttributeValues: {
+        ":name": parsedBody.name,
+        ":dueDate": parsedBody.dueDate,
+      },
+      ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate"},
+      ReturnValues: "UPDATED_NEW"
+    }).promise()
+
+  } else {
+    await this.docClient.update({
+      TableName: this.todosTable,
+      Key: {
+        userId,
+        todoId
+      },
+      UpdateExpression: "set #name =:name, #dueDate=:dueDate, #done=:done",
+      ExpressionAttributeValues: {
+        ":name": parsedBody.name,
+        ":dueDate": parsedBody.dueDate,
+        ":done": parsedBody.done
+      },
+      ExpressionAttributeNames: {"#name": "name", "#dueDate": "dueDate", "#done": "done"},
+      ReturnValues: "UPDATED_NEW"
+    }).promise()
+  }
+
+  return result
+
   }
 }
 
