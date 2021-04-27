@@ -5,6 +5,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 import { createLogger } from '../../utils/logger';
 
 import { deleteTodo } from '../../businessLogic/todos';
+import { getToken } from '../utils';
 
 const logger = createLogger('deleteTodo');
 
@@ -16,12 +17,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     event
   })
 
-  // to get the user id
-  const authorization = event.headers.Authorization
-  const split = authorization.split(' ')
-  const jwtToken = split[1]
 
-
+  const jwtToken = getToken(event);
   const result = await deleteTodo(jwtToken, todoId);
 
 

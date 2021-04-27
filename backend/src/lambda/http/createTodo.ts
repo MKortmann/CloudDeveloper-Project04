@@ -2,14 +2,11 @@
 
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-
 import { createTodo } from '../../businessLogic/todos'
-
 import { createLogger } from '../../utils/logger';
-
+import { getToken } from '../utils';
 
 const logger = createLogger('createTodo');
-
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
@@ -19,10 +16,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   // getting the body
   const parsedBody: CreateTodoRequest = JSON.parse(event.body)
 
-  // to get the user id
-  const authorization = event.headers.Authorization
-  const split = authorization.split(' ')
-  const jwtToken = split[1]
+  const jwtToken = getToken(event);
 
   const item = await createTodo(jwtToken, parsedBody);
 

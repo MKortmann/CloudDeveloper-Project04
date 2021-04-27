@@ -3,6 +3,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda';
 import { generateUploadUrl } from '../../businessLogic/todos';
 import { createLogger } from '../../utils/logger';
+import { getToken } from '../utils';
 
 
 const logger = createLogger('generateUploadUrls');
@@ -15,15 +16,11 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   const todoId = event.pathParameters.todoId
 
-  // to get the user id
-  const authorization = event.headers.Authorization
-  const split = authorization.split(' ')
-  const jwtToken = split[1]
-
+  const jwtToken = getToken(event);
 
   const result = await generateUploadUrl(jwtToken, todoId)
 
-  // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
+  // return a presigned URL to upload a file for a TODO item with the provided id
   return {
     statusCode: result.statusCode,
     headers: {

@@ -3,8 +3,8 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import { updatedTodo } from '../../businessLogic/todos'
-
 import { createLogger } from '../../utils/logger';
+import { getToken } from '../utils';
 
 const logger = createLogger('updateTodos');
 
@@ -19,10 +19,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     updatedTodo
   })
 
-  // to get the user id
-  const authorization = event.headers.Authorization
-  const split = authorization.split(' ')
-  const jwtToken = split[1]
+  const jwtToken = getToken(event);
 
   const result = await updatedTodo(jwtToken, todoId, parsedBody);
 

@@ -1,9 +1,8 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 // import 'source-map-support';
-
 import { createLogger } from '../../utils/logger';
-
 import { getTodos } from '../../businessLogic/todos'
+import { getToken } from '../utils';
 
 const logger = createLogger('getTodos');
 
@@ -16,10 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   })
 
   // to get the user jwtToken from header
-  const authorization = event.headers.Authorization
-  const split = authorization.split(' ')
-  const jwtToken = split[1]
-
+  const jwtToken = getToken(event);
   const items = await getTodos(jwtToken);
 
   // Return result
