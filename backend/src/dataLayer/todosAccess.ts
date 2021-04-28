@@ -208,7 +208,7 @@ export class TodoAccess {
 		result.body = this.s3.getSignedUrl('putObject', {
 			Bucket: this.s3Bucket,
 			Key: todoId,
-			Expires: this.urlExpiration
+			Expires: parseInt(this.urlExpiration)
 		})
 
 		return result
